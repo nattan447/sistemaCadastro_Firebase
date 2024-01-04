@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "89530609566",
+    "project_id": "loginscreen-56dd2",
+    "storage_bucket": "loginscreen-56dd2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:89530609566:android:208fd09adf1dad34ddf08f",
+        "android_client_info": {
+          "package_name": "com.firebaseproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz34goWlKlnUkE-wkhYshcBjmwz3Q9aEE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

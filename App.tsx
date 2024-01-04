@@ -4,102 +4,157 @@
  *
  * @format
  */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
+import {FirebaseConfig} from './FirebaseConfig';
+import {initializeApp} from 'firebase/app';
+import {SafeAreaView, StatusBar, StyleSheet, Alert} from 'react-native';
+import {useState, useEffect} from 'react';
+import auth from '@react-native-firebase/auth';
+import {AuthenticScreen} from './components/authenticScreen';
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [hasAccount, setHasAccount] = useState(true);
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassWord] = useState<string>('');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const clear = {
+    clearEmail: () => setEmail(''),
+    clearPass: () => setPassWord(''),
+  };
+
+  function inputLength(input: string): number {
+    const regexEmptyInput = /^\S+$/;
+    if (input != undefined) {
+      const nameNoSpaces = input
+        .split('')
+        .filter(char => regexEmptyInput.test(char));
+      return nameNoSpaces.length;
+    } else {
+      return 0;
+    }
+  }
+  useEffect(() => {
+    const app = initializeApp(FirebaseConfig);
+    console.log('Firebase initialized');
+  }, []);
+  const signIn = async () => {
+    if (inputLength(email) >= 1 && inputLength(password) >= 1)
+      try {
+        const userCredential = await auth().signInWithEmailAndPassword(
+          email,
+          password,
+        );
+        Alert.alert(
+          'relatório',
+          'login bem sucedido usuario  ' + userCredential.user.email,
+          [
+            {
+              text: 'fechar',
+            },
+          ],
+        );
+        clear.clearEmail();
+        clear.clearPass();
+        console.log('entrou na conta com sucesso:', userCredential.user);
+      } catch (error) {
+        Alert.alert('relatório', 'erro, email ou senha incorretos', [
+          {
+            text: 'fechar',
+          },
+        ]);
+        console.error('Sign-in error:', error);
+      }
+    else Alert.alert('relatório', 'preencha os dois campos');
+  };
+  const signUp = async () => {
+    const regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (inputLength(email) >= 1 && inputLength(password) >= 1) {
+      if (regexEmail.test(email)) {
+        console.log('passou no teste do email');
+        if (password.length >= 6) {
+          try {
+            const userCredential = await auth().createUserWithEmailAndPassword(
+              email,
+              password,
+            );
+
+            Alert.alert(
+              'relatório',
+              'usario criado com sucesso: ' + userCredential.user.email,
+              [
+                {
+                  text: 'fechar',
+                },
+              ],
+            );
+            clear.clearEmail();
+            clear.clearPass();
+            console.log('usuário criado com sucesso:', userCredential.user);
+          } catch (error) {
+            console.error('erro ao criar o usuário:', error);
+            Alert.alert('relatório', 'falha ao criar conta', [
+              {
+                text: 'fechar',
+              },
+            ]);
+          }
+        } else
+          Alert.alert(
+            'relatório',
+            'a senha deve possuir pelo menos 6 caracteres',
+          );
+      } else {
+        console.log('email não está no modelo correto');
+        Alert.alert('relatório', 'digite o email com o modelo correto');
+      }
+    } else Alert.alert('relatório', 'preencha os dois campos');
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <StatusBar hidden={true}></StatusBar>
+
+      {hasAccount ? (
+        <AuthenticScreen
+          headerTxt="entrar em sua conta"
+          valueEmail={email}
+          onChangeEmail={Em => {
+            setEmail(Em);
+          }}
+          valuePass={password}
+          onChangePass={ps => setPassWord(ps)}
+          btnTxt="entrar"
+          pressBtn={signIn}
+          btnAccountTxt="não possui conta"
+          btnAccountPress={() => setHasAccount(false)}
+        />
+      ) : (
+        <AuthenticScreen
+          headerTxt="cadastre uma conta"
+          valueEmail={email}
+          onChangeEmail={Em => {
+            setEmail(Em);
+          }}
+          valuePass={password}
+          onChangePass={ps => setPassWord(ps)}
+          btnTxt="cadastrar"
+          pressBtn={signUp}
+          btnAccountTxt="já tenho conta"
+          btnAccountPress={() => {
+            setEmail('');
+            setPassWord('');
+            setHasAccount(true);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 24,
